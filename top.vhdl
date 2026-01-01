@@ -1,0 +1,74 @@
+----------------------------------------------------------------------------------
+-- Company: 
+-- Engineer: 
+-- 
+-- Create Date: 23.12.2025 19:47:41
+-- Design Name: 
+-- Module Name: lift - Behavioral
+-- Project Name: 
+-- Target Devices: 
+-- Tool Versions: 
+-- Description: 
+-- 
+-- Dependencies: 
+-- 
+-- Revision:
+-- Revision 0.01 - File Created
+-- Additional Comments:
+-- 
+----------------------------------------------------------------------------------
+
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use ieee.numeric_std.all;
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx leaf cells in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+
+entity top is
+  Port (
+    clk             :   in std_logic;
+    reset           :   in std_logic;
+    floor_request   :   in std_logic_vector(3 downto 0);
+    move_up         :   out std_logic;
+    move_down       :   out std_logic;
+    open_door       :   out std_logic;
+    floor           :   out std_logic_vector(3 downto 0);
+ --   f_o             :   out std_logic_vector(3 downto 0);
+    led             :   out std_logic    
+   );
+end top;
+
+architecture Behavioral of top is
+
+signal c_out    :   std_logic;
+begin
+
+    led <= c_out;
+    clk_div : entity work.clock_divider
+        port map(
+            clk         => clk,
+            reset       => reset,
+            slow_clk    => c_out
+         );
+         
+    lift : entity work.lift
+        port map(
+            clk        =>   clk,
+            reset      =>   reset,
+            floor_req  =>   floor_request,
+            move_up    =>   move_up,
+            move_down  =>   move_down,
+            open_door  =>   open_door,
+            floor      =>   floor
+          --  f_o        =>   f_o
+         
+        );
+
+end Behavioral;

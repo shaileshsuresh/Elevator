@@ -4,7 +4,7 @@
 -- 
 -- Create Date: 23.12.2025 19:47:41
 -- Design Name: 
--- Module Name: lift - Behavioral
+-- Module Name: top - Behavioral
 -- Project Name: 
 -- Target Devices: 
 -- Tool Versions: 
@@ -35,6 +35,7 @@ entity top is
   Port (
     clk             :   in std_logic;
     reset           :   in std_logic;
+	--slow_clk		:	in std_logic;
     floor_request   :   in std_logic_vector(3 downto 0);
     move_up         :   out std_logic;
     move_down       :   out std_logic;
@@ -47,21 +48,22 @@ end top;
 
 architecture Behavioral of top is
 
-signal c_out    :   std_logic;
+signal slow_en   :   std_logic;
 begin
 
-    led <= c_out;
-    clk_div : entity work.clock_divider
+    led <= slow_en;
+    clk_div : entity work.clock_enable_gen
         port map(
             clk         => clk,
             reset       => reset,
-            slow_clk    => c_out
+            slow_en     => slow_en
          );
          
     lift : entity work.lift
         port map(
             clk        =>   clk,
             reset      =>   reset,
+			slow_en	   =>   slow_en,
             floor_req  =>   floor_request,
             move_up    =>   move_up,
             move_down  =>   move_down,

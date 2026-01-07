@@ -4,7 +4,7 @@
 -- 
 -- Create Date: 23.12.2025 19:47:41
 -- Design Name: 
--- Module Name: lift - Behavioral
+-- Module Name: clock_divider - Behavioral
 -- Project Name: 
 -- Target Devices: 
 -- Tool Versions: 
@@ -31,36 +31,42 @@ use ieee.numeric_std.all;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity clock_divider is
+entity clock_enable_gen is
+  generic (
+	MAX_COUNT	:	integer := 10
+  );
+	
   Port (
-    clk     :   in std_logic;
-    reset   :   in std_logic;
-    clk_out   :   out std_logic    
+    clk     	:   in std_logic;
+    reset   	:   in std_logic;
+    slow_en    :   out std_logic    
    );
-end clock_divider;
+end clock_enable_gen;
 
-architecture Behavioral of clock_divider is
+architecture Behavioral of clock_enable_gen is
 
-signal count    :   unsigned(27 downto 0);
+signal count    :   integer range 0 to MAX_COUNT-1;
 signal c_out    :   std_logic;
 begin
 
-    process(clk,reset)
+    process(clk)
     begin
-        if reset = '1' then
-            c_out <= '0';
-            count <= (others => '0');
-        elsif rising_edge(clk) then
-            if count = 24999999 then
-                count <= (others => '0');
-                c_out <= not c_out;
+		if rising_edge(clk) then
+			if reset = '1' then
+				c_out <= '0';
+				count <= 0;
+			elsif count = MAX_COUNT-1 then
+                count <= 0;
+                c_out <= '1';
             else
                 count <= count + 1;
+				c_out <= '0';
             end if;
         end if;
     end process;
     
-    clk_out <= c_out;
+    slow_en <= c_out;
  
 
 end Behavioral;
+

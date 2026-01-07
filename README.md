@@ -21,11 +21,14 @@ clock_divider.vhdl – Clock-enable generator
 
 top.vhdl – Top-level integration
 
+**Testbench File**
+
+top_tb.vhdl – Self-checking testbech for the top design
 **Tools**
 
 Language: VHDL
 
-Simulation: ModelSim / Questa / GHDL (or equivalent)
+Simulation: ModelSim (or equivalent)
 
 **Notes**
 

@@ -35,7 +35,7 @@ entity lift is
   Port (
     clk        :    in std_logic;
     reset      :    in std_logic;
- --   slow_clk   :    in std_logic;
+    slow_en    :    in std_logic;
     floor_req  :    in std_logic_vector(3 downto 0);
     move_up    :    out std_logic;
     move_down  :    out std_logic;
@@ -49,6 +49,8 @@ architecture Behavioral of lift is
 
 type state_t is (idle,moving_up,moving_down,door);
 
+constant DOOR_TIMER : integer:= 5;
+
 signal state        :   state_t;
 signal next_state   :   state_t;
 --signal timer        :   unsigned(4 downto 0);
@@ -56,7 +58,8 @@ signal next_state   :   state_t;
 --signal invalid      :   std_logic;
 signal current_floor:   integer range 0 to 3 := 0;
 signal target_floor	:	integer range 0 to 3 := 0;
-signal slow_en		:	std_logic;
+signal door_cnt	:	integer range 0 to DOOR_TIMER := 0;
+--signal slow_en		:	std_logic;
 
 signal latched_req	:	std_logic_vector(3 downto 0) := (others => '0');
 --constant FLOOR_0 : unsigned(1 downto 0) := "00";
@@ -65,19 +68,8 @@ signal latched_req	:	std_logic_vector(3 downto 0) := (others => '0');
 --constant FLOOR_3 : unsigned(1 downto 0) := "11";
 
 begin
-   -- slow_en <= slow_clk;
-    clk_div : entity work.clock_divider
-        port map(
-            clk         => clk,
-            reset       => reset,
-            slow_clk    => slow_en
-     --       floor_req   =>   ,
-      --      move_up     =>   ,
-        --    move_down   =>   ,
- --           open_door   =>   ,
-   --         floor       =>   ,   
-     --       f_o         =>      
-            );
+   
+    
 			
 			
    --Target floor register-- 
@@ -86,12 +78,18 @@ begin
 		if rising_edge(clk) then
 			if reset = '1' then
 				target_floor <= 0;
-			elsif latched_req /= "0000" then
-				for i in 0 to 3 loop
-					if latched_req(i) = '1' then
-						target_floor <= i;
-					end if;
-				end loop;
+			elsif state = idle and latched_req /= "0000" then
+				if latched_req(0) = '1' then
+					target_floor <= 0;
+				elsif latched_req(1) = '1' then
+					target_floor <= 1;
+				elsif latched_req(2) = '1' then
+					target_floor <= 2;
+				elsif latched_req(3) = '1' then
+					target_floor <= 3;
+				else
+					target_floor <= current_floor;
+				end if;
 				
 			end if;
 		end if;
@@ -110,9 +108,46 @@ begin
 		end if;
 	end process;
 	
+	--Door timer logic --
+	
+	process(clk)
+	begin
+    if rising_edge(clk) then
+        if reset = '1' then
+            door_cnt <= 0;
+
+        elsif state = door then
+            if slow_en = '1' then
+                if door_cnt < DOOR_TIMER then
+                    door_cnt <= door_cnt + 1;
+                end if;
+            end if;
+
+        else
+            door_cnt <= 0;  -- reset timer when not in door
+        end if;
+    end if;
+end process;
+	
+	--Request latch process--
+	
+	process(clk)
+	begin
+		if rising_edge(clk) then
+			if reset = '1' then
+				latched_req <= (others => '0');
+			elsif latched_req = "0000" and floor_req /= "0000" then
+				latched_req <= floor_req;
+			elsif state = door then
+				latched_req <= (others => '0');
+			end if;
+		end if;
+	end process;
+	
+	
 	--FSM combinational logic--
 	
-	process(state, next_state)
+	process(state, current_floor, target_floor, latched_req, door_cnt)
 	begin
 		next_state <= state;
 		move_up    <= '0';
@@ -136,16 +171,27 @@ begin
 				move_up <= '1';
 				if current_floor = target_floor then
 					next_state <= door;
+				else
+				
 				end if;
 			
 			when moving_down => 
 				move_down <= '1';
 				if current_floor = target_floor then
 					next_state <= door;
+				else
+				
 				end if;
+				
 			when door =>
-				open_door <= '1';
-			
+				
+				if door_cnt = DOOR_TIMER then
+					next_state <= idle;
+					open_door  <= '0';
+				else
+					open_door <= '1';
+					next_state <= door;
+				end if;
 		end case;
 	end process;
 	
